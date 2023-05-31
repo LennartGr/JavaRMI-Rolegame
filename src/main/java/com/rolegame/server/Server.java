@@ -1,6 +1,8 @@
 package com.rolegame.server;
 
+import com.rolegame.data.Match;
 import com.rolegame.data.Message;
+import com.rolegame.data.Statistics;
 import com.rolegame.client.ClientInterface;
 
 import java.rmi.Naming;
@@ -11,7 +13,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Server extends UnicastRemoteObject implements ChatInterface {
+public class Server extends UnicastRemoteObject implements ServerInterface {
 	private static final long serialVersionUID = 1L;
 
 	List<ClientInterface> clientsList = new ArrayList<ClientInterface>();
@@ -44,22 +46,32 @@ public class Server extends UnicastRemoteObject implements ChatInterface {
 		}
 	}
 
-	@Override
-	public synchronized void sendMessage(Message messsage) throws RemoteException {
-		// broadcast message to everyone
-		for (ClientInterface client : clientsList) {
-			client.receiveMessage(messsage);
-		}
-	}
-
 	public static void main(String args[]) throws Exception {
 		try {
 			LocateRegistry.createRegistry(1099);
 		} catch (RemoteException e) {
 		}
 		Server chatServer = new Server();
-		Naming.rebind("//localhost/RmiServer", chatServer);
+		Naming.rebind("//localhost/rolegame", chatServer);
 		System.out.println("Server ready!");
 	}
+
+    @Override
+    public Statistics getStatistics(String clientId) throws RemoteException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getStatistics'");
+    }
+
+    @Override
+    public void startMatchAgainstServer(String clientId) throws RemoteException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'startMatchAgainstServer'");
+    }
+
+    @Override
+    public Match startMatchAgainstPlayer(String clientId) throws RemoteException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'startMatchAgainstPlayer'");
+    }
 
 }
