@@ -5,7 +5,6 @@ import com.rolegame.remote.Match;
 import com.rolegame.remote.MatchInterface;
 import com.rolegame.client.ClientInterface;
 
-import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -18,13 +17,11 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 	private static final long serialVersionUID = 1L;
 
 	private List<ClientInterface> clientsList = new ArrayList<ClientInterface>();
+	private MatchInterface currentOpenMatch = null;
 
 	public Server() throws RemoteException {
 		super(0);
 	}
-
-	private MatchInterface currentOpenMatch = null;
-	String currentOpenMatchCode;
 
 	@Override
 	public synchronized void register(ClientInterface client) throws RemoteException {
@@ -80,18 +77,14 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 	}
 
 	@Override
-	public String startMatchAgainstPlayer(ClientInterface client) throws RemoteException {
+	public MatchInterface startMatchAgainstPlayer(ClientInterface client) throws RemoteException {
 		if (this.currentOpenMatch == null) {
 			currentOpenMatch = new Match();
-			currentOpenMatchCode = "tmp";
-			try {
-				Naming.rebind(currentOpenMatchCode, currentOpenMatch);
-			} catch (MalformedURLException e) {
-				// TODO
-			}
+		} else {
+			
 		}
 		currentOpenMatch.registerClient(client);
-		return currentOpenMatchCode;
+		return currentOpenMatch;
 	}
 
 }

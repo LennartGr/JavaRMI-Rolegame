@@ -4,6 +4,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 import com.rolegame.data.Statistics;
+import com.rolegame.remote.MatchInterface;
 import com.rolegame.client.ClientInterface;
 
 public interface ServerInterface extends Remote {
@@ -14,6 +15,6 @@ public interface ServerInterface extends Remote {
 	
     public Statistics getStatistics(String clientId, String clientName) throws RemoteException; 
     public void startMatchAgainstServer(String clientId) throws RemoteException;
-    public String startMatchAgainstPlayer(ClientInterface client) throws RemoteException;
+    public MatchInterface startMatchAgainstPlayer(ClientInterface client) throws RemoteException;
 
 }

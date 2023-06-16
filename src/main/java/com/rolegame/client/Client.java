@@ -109,14 +109,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 	}
 
 	public MatchInterface joinMatch() throws RemoteException {
-		String matchCode = server.startMatchAgainstPlayer(this);
-		MatchInterface match;
-		try {
-			match = (MatchInterface) Naming.lookup(matchCode);
-		} catch (MalformedURLException | NotBoundException e) {
-			System.out.println("Could not create match");
-			return null;
-		}
+		MatchInterface match  = server.startMatchAgainstPlayer(this);
 		return match;
 	}
 
