@@ -14,6 +14,10 @@ import com.rolegame.server.ServerInterface;
 
 public class Client extends UnicastRemoteObject implements ClientInterface {
 	private static final String EXIT_CODE = "exit";
+	private static final String CMD_STATS = "stats";
+	private static final String CMD_NEW = "new";
+	private static final String CMD_FIGHT_PLAYER = "fightplayer";
+	private static final String CMD_FIGHT_SERVER = "fightserver";
 
 	private ServerInterface server;
 	private String id;
@@ -52,10 +56,44 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 		statistics = server.getStatistics(id, name);
 		JansiHelper.print("You have the following statistics:");
 		JansiHelper.print(statistics.toString());
-		
+	}
+
+	private void displayMenuInfo() {
+		JansiHelper.print("Type " + JansiHelper.alert(CMD_STATS) + " to see your stats.");
+		JansiHelper.print("Type " + JansiHelper.alert(CMD_NEW) + " to create a new character.");
+		JansiHelper.print("Type " + JansiHelper.alert(CMD_FIGHT_PLAYER) + " to challenge a player.");
+		JansiHelper.print("Type " + JansiHelper.alert(CMD_FIGHT_SERVER) + " to challenge the server.");
+		JansiHelper.print("Type " + JansiHelper.colorize(EXIT_CODE, "red") + " to leave.");
 	}
 
 	public void run() throws RemoteException {
+		String input = "";
+		while (! input.equals(EXIT_CODE)) {
+			displayMenuInfo();
+			input = scanner.nextLine();
+			switch (input) {
+				case CMD_STATS:
+					JansiHelper.print(statistics.toString());
+					break;
+				case CMD_NEW:
+					createCharacter();
+					break;
+				case CMD_FIGHT_PLAYER:
+					fightPlayer();
+					break;
+				case CMD_FIGHT_SERVER:
+					fightServer();
+					break;
+				case EXIT_CODE:
+					return;
+				default: {
+					JansiHelper.printError("Unrecognized command, try again.");
+				}
+			}
+		}
+	}
+
+	public void fightPlayer() throws RemoteException {
 		MatchInterface match = joinMatch();
 		if (match == null)
 			return;
@@ -64,6 +102,10 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 			match.increase();
 			System.out.println("counter: " + match.getCounter());
 		}
+	}
+
+	public void fightServer() {
+
 	}
 
 	public MatchInterface joinMatch() throws RemoteException {
@@ -101,11 +143,6 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 		return this.id.equals(other.id);
 	}
 
-	public static void main(String args[]) throws Exception {
-		Client chatClient = new Client();
-		chatClient.createCharacter();
-	}
-
 	@Override
 	public Statistics getStatistics() throws RemoteException {
 		return statistics;
@@ -114,6 +151,13 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 	@Override
 	public void setStatistics(Statistics statistics) throws RemoteException {
 		this.statistics = statistics;
+	}
+
+	public static void main(String args[]) throws Exception {
+		Client chatClient = new Client();
+		chatClient.createCharacter();
+		chatClient.run();
+		chatClient.close();
 	}
 
 }
