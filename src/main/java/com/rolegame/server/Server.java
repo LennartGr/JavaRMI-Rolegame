@@ -23,8 +23,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 		super(0);
 	}
 
-	private MatchInterface match = null;
-	String matchCode = "//localhost/rolegame/match";
+	private MatchInterface currentOpenMatch = null;
+	String currentOpenMatchCode;
 
 	@Override
 	public synchronized void register(ClientInterface client) throws RemoteException {
@@ -81,15 +81,17 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 
 	@Override
 	public String startMatchAgainstPlayer(ClientInterface client) throws RemoteException {
-		if (this.match == null) {
-			match = new Match();
+		if (this.currentOpenMatch == null) {
+			currentOpenMatch = new Match();
+			currentOpenMatchCode = "tmp";
 			try {
-				Naming.rebind(matchCode, match);
+				Naming.rebind(currentOpenMatchCode, currentOpenMatch);
 			} catch (MalformedURLException e) {
 				// TODO
 			}
 		}
-		return matchCode;
+		currentOpenMatch.registerClient(client);
+		return currentOpenMatchCode;
 	}
 
 }
