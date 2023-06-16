@@ -8,18 +8,19 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Scanner;
 import java.util.UUID;
 
-import com.rolegame.server.ChatInterface;
+import com.rolegame.remote.MatchInterface;
+import com.rolegame.server.ServerInterface;
 
 public class Client extends UnicastRemoteObject implements ClientInterface {
 	public static final String EXIT_CODE = "exit";
 
-	public ChatInterface server;
+	public ServerInterface server;
 	public String id;
 	public Scanner scanner;
 
 	public Client() throws MalformedURLException, RemoteException, NotBoundException {
 		super();
-		server = (ChatInterface) Naming.lookup("//localhost/rolegame");
+		server = (ServerInterface) Naming.lookup("//localhost/rolegame");
 		id = UUID.randomUUID().toString();
 		server.register(this);
 		scanner = new Scanner(System.in);
@@ -30,6 +31,28 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 		server.unregister(this);
 		// this line is necessary to terminate the process
 		UnicastRemoteObject.unexportObject(this, true);
+	}
+
+	public void run() throws RemoteException {
+		MatchInterface match = joinMatch();
+		if (match == null) return;
+		while (true) {
+			String nextline = scanner.nextLine();
+			match.increase();
+			System.out.println("counter: " + match.getCounter());
+		}
+	}
+
+	public MatchInterface joinMatch() throws RemoteException {
+		String matchCode = server.startMatchAgainstPlayer(this);
+		MatchInterface match;
+		try {
+			match = (MatchInterface) Naming.lookup(matchCode);
+		} catch (MalformedURLException | NotBoundException e) {
+			System.out.println("Could not create match");
+			return null;
+		}
+		return match;
 	}
 
 	@Override
@@ -57,6 +80,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 
 	public static void main(String args[]) throws Exception {
 		Client chatClient = new Client();
+		chatClient.run();
 	}
 
 }
