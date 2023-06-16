@@ -63,7 +63,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 	public Statistics getStatistics(String clientId, String clientName) throws RemoteException {
 		final int maxLive = 10;
 		final int maxEndurance = 10;
-		final int protection = 5;
+		final int protection = 3;
 		final int power = 5;
 		final int stamina = 5;
 		final int speed = 5;

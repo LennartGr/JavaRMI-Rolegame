@@ -8,6 +8,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Scanner;
 import java.util.UUID;
 
+import com.rolegame.data.RolegameException;
 import com.rolegame.data.Statistics;
 import com.rolegame.remote.MatchInterface;
 import com.rolegame.server.ServerInterface;
@@ -18,6 +19,18 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 	private static final String CMD_NEW = "new";
 	private static final String CMD_FIGHT_PLAYER = "fightplayer";
 	private static final String CMD_FIGHT_SERVER = "fightserver";
+
+	// commands match
+	private static final String CMD_OTHER_STATS = "statsother";
+	private static final String CMD_LIGHT_ATTACK = "light";
+	private static final String CMD_HEAVY_ATTACK = "heavy";
+
+	private static final String MSG_WIN = "You won!";
+	private static final String MSG_WIN_TIMEOUT = "You won because your opponent waited too long.";
+	private static final String MSG_LOSE = "You lost!";
+	private static final String MSG_LOSE_TIMEOUT = "You lost because you waited too long.";
+
+	private static final String ERR_UNKNOWN_CMD = "Unrecognized command, try again.";
 
 	private ServerInterface server;
 	private String id;
@@ -66,9 +79,16 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 		JansiHelper.print("Type " + JansiHelper.colorize(EXIT_CODE, "red") + " to leave.");
 	}
 
+	private void displayMatchMenuInfo() {
+		JansiHelper.print("Type " + JansiHelper.alert(CMD_STATS) + " to see your stats.");
+		JansiHelper.print("Type " + JansiHelper.alert(CMD_OTHER_STATS) + " to see your opponents stats.");
+		JansiHelper.print("Type " + JansiHelper.alert(CMD_LIGHT_ATTACK) + " to make a light attack.");
+		JansiHelper.print("Type " + JansiHelper.alert(CMD_HEAVY_ATTACK) + " to make a heavy attack.");
+	}
+
 	public void run() throws RemoteException {
 		String input = "";
-		while (! input.equals(EXIT_CODE)) {
+		while (!input.equals(EXIT_CODE)) {
 			displayMenuInfo();
 			input = scanner.nextLine();
 			switch (input) {
@@ -87,22 +107,71 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 				case EXIT_CODE:
 					return;
 				default: {
-					JansiHelper.printError("Unrecognized command, try again.");
+					JansiHelper.printError(ERR_UNKNOWN_CMD);
 				}
 			}
 		}
 	}
 
-	public void fightPlayer() throws RemoteException {
+	private void fightPlayer() throws RemoteException {
 		MatchInterface match = joinMatch();
 		if (match == null)
 			return;
-		while (!match.isReady()){}
+		while (!match.isReady()) {
+		}
 		JansiHelper.print("Match now ready");
+		
+		// to ensure console is not flooded with wainting messages
+		boolean waitingDisplayed = false;
 		while (true) {
-			String tmp = scanner.nextLine();
-			match.increase();
-			JansiHelper.print("" + match.getCounter());
+			String winningClient = match.getWinningClient();
+			// TODO display winning because of timeout?
+			if (winningClient != null && winningClient.equals(id)) {
+				JansiHelper.print(JansiHelper.alert(MSG_WIN));
+				return;
+			} else if (winningClient != null) {
+				JansiHelper.print(JansiHelper.alert(MSG_LOSE));
+				return;
+			}
+			if (match.isActiveClient(this.id)) {
+				JansiHelper.print("It is your turn!");
+				makeMatchChoice(match);
+				waitingDisplayed = false;
+			} else if (!waitingDisplayed) {
+				JansiHelper.print("Waiting for the other player to attack...");
+				waitingDisplayed = true;
+			}
+		}
+	}
+
+	private void makeMatchChoice(MatchInterface match) throws RemoteException {
+		while (true) {
+			displayMatchMenuInfo();
+			String input = scanner.nextLine();
+			switch (input) {
+				case CMD_STATS:
+					JansiHelper.print(statistics.toString());
+					break;
+				case CMD_OTHER_STATS:
+					JansiHelper.print(match.getOpponenStatistics(id).toString());
+					break;
+				case CMD_LIGHT_ATTACK:
+					try {
+						match.makeAttack(id, false);
+					} catch (RolegameException e) {
+						// never thrown
+					}
+					return;
+				case CMD_HEAVY_ATTACK:
+					try {
+						match.makeAttack(id, true);
+						return;
+					} catch (RolegameException e) {
+						JansiHelper.printError(e.getMessage());
+					}
+					break;
+				default: JansiHelper.printError(ERR_UNKNOWN_CMD);	
+			}
 		}
 	}
 
@@ -111,7 +180,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 	}
 
 	public MatchInterface joinMatch() throws RemoteException {
-		MatchInterface match  = server.startMatchAgainstPlayer(this);
+		MatchInterface match = server.startMatchAgainstPlayer(this);
 		return match;
 	}
 
