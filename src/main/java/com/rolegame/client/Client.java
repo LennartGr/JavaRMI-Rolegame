@@ -114,13 +114,23 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 	}
 
 	private void fightPlayer() throws RemoteException {
-		MatchInterface match = joinMatch();
+		MatchInterface match = server.startMatchAgainstPlayer(this);
+		fightGeneral(match);
+	}
+
+	public void fightServer() throws RemoteException {
+		MatchInterface match = server.startMatchAgainstServer(this);
+		fightGeneral(match);
+	}
+
+	// fight a match in general, no matter whether against server or client
+	private void fightGeneral(MatchInterface match) throws RemoteException {
 		if (match == null)
 			return;
 		while (!match.isReady()) {
 		}
 		JansiHelper.print("Match now ready");
-		
+
 		// to ensure console is not flooded with wainting messages
 		boolean waitingDisplayed = false;
 		while (true) {
@@ -128,10 +138,10 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 			// TODO display winning because of timeout?
 			if (winningClient != null && winningClient.equals(id)) {
 				JansiHelper.print(JansiHelper.alert(MSG_WIN));
-				return;
+				break;
 			} else if (winningClient != null) {
 				JansiHelper.print(JansiHelper.alert(MSG_LOSE));
-				return;
+				break;
 			}
 			if (match.isActiveClient(this.id)) {
 				JansiHelper.print("It is your turn!");
@@ -142,6 +152,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 				waitingDisplayed = true;
 			}
 		}
+		resetActiveLiveAndEndurance();
 	}
 
 	private void makeMatchChoice(MatchInterface match) throws RemoteException {
@@ -170,23 +181,20 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 						JansiHelper.printError(e.getMessage());
 					}
 					break;
-				default: JansiHelper.printError(ERR_UNKNOWN_CMD);	
+				default:
+					JansiHelper.printError(ERR_UNKNOWN_CMD);
 			}
 		}
 	}
 
-	public void fightServer() {
-
-	}
-
-	public MatchInterface joinMatch() throws RemoteException {
-		MatchInterface match = server.startMatchAgainstPlayer(this);
-		return match;
+	private void resetActiveLiveAndEndurance() {
+		this.statistics.setActiveEndurance(this.statistics.getMaxEndurance());
+		this.statistics.setActiveLive(this.statistics.getMaxLive());
 	}
 
 	@Override
 	public void receiveInformation(String information) throws RemoteException {
-		System.out.println("[" + information + "]");
+		JansiHelper.print("[" + JansiHelper.colorize(information, "yellow") + "]");
 	}
 
 	@Override

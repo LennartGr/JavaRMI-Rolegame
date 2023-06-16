@@ -8,12 +8,6 @@ import com.rolegame.data.RolegameException;
 import com.rolegame.data.Statistics;
 
 public interface MatchInterface extends Remote {
-    
-    // TODO del
-    public void increase() throws RemoteException;
-
-    // TODO del
-    public int getCounter() throws RemoteException;
 
     public boolean isReady() throws RemoteException;
 

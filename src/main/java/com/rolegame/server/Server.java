@@ -3,6 +3,7 @@ package com.rolegame.server;
 import com.rolegame.data.Statistics;
 import com.rolegame.remote.Match;
 import com.rolegame.remote.MatchInterface;
+import com.rolegame.remote.ServerMatch;
 import com.rolegame.client.ClientInterface;
 
 import java.rmi.Naming;
@@ -73,9 +74,10 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 	}
 
 	@Override
-	public void startMatchAgainstServer(String clientId) throws RemoteException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'startMatchAgainstServer'");
+	public MatchInterface startMatchAgainstServer(ClientInterface client) throws RemoteException {
+		MatchInterface serverMatch = new ServerMatch();
+		serverMatch.registerClient(client);
+		return serverMatch;
 	}
 
 	@Override

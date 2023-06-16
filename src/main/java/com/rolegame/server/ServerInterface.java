@@ -14,7 +14,7 @@ public interface ServerInterface extends Remote {
 	public void unregister(ClientInterface client) throws RemoteException;
 	
     public Statistics getStatistics(String clientId, String clientName) throws RemoteException; 
-    public void startMatchAgainstServer(String clientId) throws RemoteException;
+    public MatchInterface startMatchAgainstServer(ClientInterface client) throws RemoteException;
     public MatchInterface startMatchAgainstPlayer(ClientInterface client) throws RemoteException;
 
 }

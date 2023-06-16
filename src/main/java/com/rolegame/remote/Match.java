@@ -9,23 +9,11 @@ import com.rolegame.data.Statistics;
 
 public class Match extends UnicastRemoteObject implements MatchInterface {
 
-    private int counter = 0;
-
     private ClientInterface clientA;
     private ClientInterface clientB;
     private String activeClientId;
 
     public Match() throws RemoteException {
-    }
-
-    @Override
-    public void increase() throws RemoteException {
-        counter++;
-    }
-
-    @Override
-    public int getCounter() throws RemoteException {
-        return counter;
     }
 
     @Override
