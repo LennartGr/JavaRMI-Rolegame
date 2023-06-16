@@ -11,13 +11,14 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class Server extends UnicastRemoteObject implements ServerInterface {
 	private static final long serialVersionUID = 1L;
 
 	private List<ClientInterface> clientsList = new ArrayList<ClientInterface>();
-	private MatchInterface currentOpenMatch = null;
+	private LinkedList<MatchInterface> matches = new LinkedList<>();
 
 	public Server() throws RemoteException {
 		super(0);
@@ -78,13 +79,25 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 
 	@Override
 	public MatchInterface startMatchAgainstPlayer(ClientInterface client) throws RemoteException {
-		if (this.currentOpenMatch == null) {
-			currentOpenMatch = new Match();
+		if (matches.isEmpty()) {
+			MatchInterface match = new Match();
+			match.registerClient(client);
+			matches.add(match);
+			return match;
 		} else {
-			
+			MatchInterface lastMatch = matches.getLast();
+			if (lastMatch.isReady()) {
+				// last match already ready: create a new match
+				MatchInterface match = new Match();
+				match.registerClient(client);
+				matches.add(match);
+				return match;
+			} else {
+				// last match not ready yet: add this client
+				lastMatch.registerClient(client);
+				return lastMatch;
+			}
 		}
-		currentOpenMatch.registerClient(client);
-		return currentOpenMatch;
 	}
 
 }

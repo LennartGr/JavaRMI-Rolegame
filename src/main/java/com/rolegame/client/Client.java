@@ -97,11 +97,8 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 		MatchInterface match = joinMatch();
 		if (match == null)
 			return;
-		while (true) {
-			String nextline = scanner.nextLine();
-			match.increase();
-			System.out.println("counter: " + match.getCounter());
-		}
+		while (!match.isReady()){}
+		JansiHelper.print("Match now ready");
 	}
 
 	public void fightServer() {
