@@ -18,7 +18,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 	private static final long serialVersionUID = 1L;
 
 	private List<ClientInterface> clientsList = new ArrayList<ClientInterface>();
-	private LinkedList<MatchInterface> matches = new LinkedList<>();
+
+	private MatchInterface lastMatch;
 
 	public Server() throws RemoteException {
 		super(0);
@@ -79,25 +80,11 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 
 	@Override
 	public MatchInterface startMatchAgainstPlayer(ClientInterface client) throws RemoteException {
-		if (matches.isEmpty()) {
-			MatchInterface match = new Match();
-			match.registerClient(client);
-			matches.add(match);
-			return match;
-		} else {
-			MatchInterface lastMatch = matches.getLast();
-			if (lastMatch.isReady()) {
-				// last match already ready: create a new match
-				MatchInterface match = new Match();
-				match.registerClient(client);
-				matches.add(match);
-				return match;
-			} else {
-				// last match not ready yet: add this client
-				lastMatch.registerClient(client);
-				return lastMatch;
-			}
-		}
+		if (lastMatch == null || lastMatch.isReady()) {
+			lastMatch = new Match();
+		} 
+		lastMatch.registerClient(client);
+		return lastMatch;
 	}
 
 }
