@@ -8,15 +8,17 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Scanner;
 import java.util.UUID;
 
+import com.rolegame.data.Statistics;
 import com.rolegame.remote.MatchInterface;
 import com.rolegame.server.ServerInterface;
 
 public class Client extends UnicastRemoteObject implements ClientInterface {
-	public static final String EXIT_CODE = "exit";
+	private static final String EXIT_CODE = "exit";
 
-	public ServerInterface server;
-	public String id;
-	public Scanner scanner;
+	private ServerInterface server;
+	private String id;
+	private Scanner scanner;
+	private Statistics statistics;
 
 	public Client() throws MalformedURLException, RemoteException, NotBoundException {
 		super();
@@ -33,9 +35,30 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 		UnicastRemoteObject.unexportObject(this, true);
 	}
 
+	public void createCharacter() throws RemoteException {
+		String name;
+		JansiHelper.print("Enter your name:");
+		while (true) {
+			name = scanner.nextLine();
+			if (name.length() < 3 || name.length() > 10) {
+				JansiHelper.printError("Player names must have between 3 and 10 characters.");
+			} else if (!name.matches("[a-zA-Z]+")) {
+				JansiHelper.printError("Player names must only consist of letters.");
+			} else {
+				// valid name
+				break;
+			}
+		}
+		statistics = server.getStatistics(id, name);
+		JansiHelper.print("You have the following statistics:");
+		JansiHelper.print(statistics.toString());
+		
+	}
+
 	public void run() throws RemoteException {
 		MatchInterface match = joinMatch();
-		if (match == null) return;
+		if (match == null)
+			return;
 		while (true) {
 			String nextline = scanner.nextLine();
 			match.increase();
@@ -56,7 +79,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 	}
 
 	@Override
-	public void receiveChatInformation(String information) throws RemoteException {
+	public void receiveInformation(String information) throws RemoteException {
 		System.out.println("[" + information + "]");
 	}
 
@@ -80,7 +103,17 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 
 	public static void main(String args[]) throws Exception {
 		Client chatClient = new Client();
-		chatClient.run();
+		chatClient.createCharacter();
+	}
+
+	@Override
+	public Statistics getStatistics() throws RemoteException {
+		return statistics;
+	}
+
+	@Override
+	public void setStatistics(Statistics statistics) throws RemoteException {
+		this.statistics = statistics;
 	}
 
 }
