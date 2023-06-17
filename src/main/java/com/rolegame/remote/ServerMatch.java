@@ -10,7 +10,7 @@ import com.rolegame.data.Statistics;
 
 public class ServerMatch extends UnicastRemoteObject implements MatchInterface {
 
-    private static final String SERVER_NAME = "server";
+    private static final String SERVER_NAME = "Robot";
 
     private ClientInterface client;
     private Statistics serverStats;

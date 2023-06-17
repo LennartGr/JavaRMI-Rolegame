@@ -2,6 +2,7 @@ package com.rolegame.remote;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Random;
 
 import com.rolegame.client.ClientInterface;
 import com.rolegame.data.RolegameException;
@@ -12,6 +13,7 @@ public class Match extends UnicastRemoteObject implements MatchInterface {
     private ClientInterface clientA;
     private ClientInterface clientB;
     private String activeClientId;
+    private Random random = new Random();
 
     public Match() throws RemoteException {
     }
@@ -39,8 +41,16 @@ public class Match extends UnicastRemoteObject implements MatchInterface {
         }
         // match ready: determine who may start
         if (this.isReady()) {
-            boolean clientAFaster = clientA.getStatistics().getSpeed() >= clientB.getStatistics().getSpeed();
-            activeClientId = clientAFaster ? clientA.getId() : clientB.getId();
+            final int speedA = clientA.getStatistics().getSpeed();
+            final int speedB = clientB.getStatistics().getSpeed();
+            if (speedA > speedB) {
+                activeClientId = clientA.getId();
+            } else if (speedA == speedB) {
+                // random choice
+                activeClientId = random.nextBoolean() ? clientA.getId() : clientB.getId();
+            } else {
+                activeClientId = clientB.getId();
+            }
         }
     }
 
