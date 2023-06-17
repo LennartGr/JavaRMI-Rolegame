@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import com.rolegame.data.RolegameException;
 import com.rolegame.data.Statistics;
+import com.rolegame.data.TooSlowException;
 import com.rolegame.remote.MatchInterface;
 import com.rolegame.server.ServerInterface;
 
@@ -184,6 +185,9 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 						match.makeAttack(id, false);
 					} catch (RolegameException e) {
 						// never thrown
+					} catch (TooSlowException e) {
+						JansiHelper.printError(e.getMessage());
+						return;
 					}
 					return;
 				case CMD_HEAVY_ATTACK:
@@ -192,6 +196,9 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 						return;
 					} catch (RolegameException e) {
 						JansiHelper.printError(e.getMessage());
+					} catch (TooSlowException e) {
+						JansiHelper.printError(e.getMessage());
+						return;
 					}
 					break;
 				default:

@@ -6,6 +6,7 @@ import java.rmi.RemoteException;
 import com.rolegame.client.ClientInterface;
 import com.rolegame.data.RolegameException;
 import com.rolegame.data.Statistics;
+import com.rolegame.data.TooSlowException;
 
 public interface MatchInterface extends Remote {
 
@@ -15,7 +16,7 @@ public interface MatchInterface extends Remote {
 
     public void registerClient(ClientInterface client) throws RemoteException;
 
-    public void makeAttack(String clientId, boolean heavy) throws RemoteException, RolegameException;
+    public void makeAttack(String clientId, boolean heavy) throws RemoteException, RolegameException, TooSlowException;
 
     public String getWinningClient() throws RemoteException;
 

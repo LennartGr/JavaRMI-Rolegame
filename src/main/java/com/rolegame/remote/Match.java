@@ -7,13 +7,17 @@ import java.util.Random;
 import com.rolegame.client.ClientInterface;
 import com.rolegame.data.RolegameException;
 import com.rolegame.data.Statistics;
+import com.rolegame.data.TooSlowException;
 
 public class Match extends UnicastRemoteObject implements MatchInterface {
+
+    private static final int TIMEOUT_SEC = 15;
 
     private ClientInterface clientA;
     private ClientInterface clientB;
     private String activeClientId;
     private Random random = new Random();
+    private double waitingTimeStart;
 
     public Match() throws RemoteException {
     }
@@ -41,17 +45,23 @@ public class Match extends UnicastRemoteObject implements MatchInterface {
         }
         // match ready: determine who may start
         if (this.isReady()) {
-            final int speedA = clientA.getStatistics().getSpeed();
-            final int speedB = clientB.getStatistics().getSpeed();
-            if (speedA > speedB) {
-                activeClientId = clientA.getId();
-            } else if (speedA == speedB) {
-                // random choice
-                activeClientId = random.nextBoolean() ? clientA.getId() : clientB.getId();
-            } else {
-                activeClientId = clientB.getId();
-            }
+            startMatch();
         }
+    }
+
+    private void startMatch() throws RemoteException {
+        final int speedA = clientA.getStatistics().getSpeed();
+        final int speedB = clientB.getStatistics().getSpeed();
+        if (speedA > speedB) {
+            activeClientId = clientA.getId();
+        } else if (speedA == speedB) {
+            // random choice
+            activeClientId = random.nextBoolean() ? clientA.getId() : clientB.getId();
+        } else {
+            activeClientId = clientB.getId();
+        }
+        // start the timer
+        waitingTimeStart = System.currentTimeMillis();
     }
 
     private ClientInterface getClientWithId(String id) throws RemoteException {
@@ -71,11 +81,19 @@ public class Match extends UnicastRemoteObject implements MatchInterface {
     }
 
     @Override
-    public void makeAttack(String clientId, boolean heavy) throws RemoteException, RolegameException {
+    public void makeAttack(String clientId, boolean heavy) throws RemoteException, RolegameException, TooSlowException {
         final int heavyAttackCost = 5;
         ClientInterface attacker = getClientWithId(clientId);
-        ClientInterface defender = getOther(attacker);
         Statistics attackerStats = attacker.getStatistics();
+        // check first that waiting time was respected
+        if (System.currentTimeMillis() - waitingTimeStart > TIMEOUT_SEC * 1000) {
+            // kill the player that was too slow
+            attackerStats.setActiveLive(-1);
+            attacker.setStatistics(attackerStats);
+            throw new TooSlowException("You were too slow!");
+        }
+        // game logic
+        ClientInterface defender = getOther(attacker);
         Statistics defenderStats = defender.getStatistics();
         if (heavy && attackerStats.getActiveEndurance() < heavyAttackCost) {
             throw new RolegameException(
@@ -98,7 +116,8 @@ public class Match extends UnicastRemoteObject implements MatchInterface {
         final String attackType = heavy ? "heavy" : "light";
         defender.receiveInformation("Your opponent made a " + attackType + " attack.");
         switchActiveClient();
-        // TODO start timer for the active client
+        // reset timer
+        this.waitingTimeStart = System.currentTimeMillis();
     }
 
     @Override
