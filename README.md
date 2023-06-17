@@ -12,6 +12,3 @@ Playable on the console.
 - Run **`java -jar target/client-rolegame.jar`** for each client. 
 
 The file **`target/rolegame-1.0-SNAPSHOT.jar`** can be ignored.
-
-## Partition of work
-The code was written in some sessions of pair programming, so all work was done together.
