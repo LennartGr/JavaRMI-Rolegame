@@ -137,7 +137,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 		} catch (RemoteException e) {
 			JansiHelper.printError(ERR_SERVER_DISCONNECT);
 		}
-		
+
 	}
 
 	private void fightServer() {
@@ -185,7 +185,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 		}
 		// even if match ended unexpectedly, need to reset active live and endurance
 		try {
-			this.statistics = server.resetClientsActiveLiveAndEndurance(this);
+			this.statistics = server.resetClientsActiveLiveAndEndurance(this.id);
 		} catch (RemoteException e) {
 			JansiHelper.printError(ERR_SERVER_DISCONNECT);
 		}
@@ -254,7 +254,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 
 	@Override
 	public Statistics getStatistics() throws RemoteException {
-		Statistics newStats = server.getClientStatistics(this);
+		Statistics newStats = server.getClientStatistics(this.id);
 		statistics = newStats;
 		return newStats;
 	}
@@ -262,14 +262,18 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 	@Override
 	public void setStatistics(Statistics statistics) throws RemoteException {
 		this.statistics = statistics;
-		server.setClientStatistics(this, statistics);
+		server.setClientStatistics(this.id, statistics);
 	}
 
 	public static void main(String args[]) throws Exception {
-		Client chatClient = new Client();
-		chatClient.createCharacter();
-		chatClient.run();
-		chatClient.close();
+		try {
+			Client chatClient = new Client();
+			chatClient.createCharacter();
+			chatClient.run();
+			chatClient.close();
+		} catch (RemoteException e) {
+			JansiHelper.printError(ERR_SERVER_DISCONNECT);
+		}
 	}
 
 }

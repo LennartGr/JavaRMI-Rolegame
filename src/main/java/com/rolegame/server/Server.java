@@ -19,8 +19,11 @@ import java.util.Map;
 public class Server extends UnicastRemoteObject implements ServerInterface {
 	private static final long serialVersionUID = 1L;
 
-	private List<ClientInterface> clientsList = new ArrayList<ClientInterface>();
-	private Map<ClientInterface, Statistics> clientStatisticsMap = new HashMap<>();
+	// private List<ClientInterface> clientsList = new ArrayList<ClientInterface>();
+	// private Map<ClientInterface, Statistics> clientStatisticsMap = new HashMap<>();
+
+	private Map<String, ClientInterface> clientsMap = new HashMap<>();
+	private Map<String, Statistics> statisticsMap = new HashMap<>();
 
 	private MatchInterface lastMatch;
 
@@ -34,7 +37,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 		System.out.println(information);
 		// make welcome message to new client, announce its present to other client
 		client.receiveInformation("You joined the role game world with id " + client.getId());
-		clientsList.add(client);
+		clientsMap.put(client.getId(), client);
 	}
 
 	@Override
@@ -42,8 +45,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 		String information = "Client left with id " + client.getId();
 		System.out.println(information);
 		client.receiveInformation("Goodbye!");
-		// removal based on the client's id, see equal() method
-		clientsList.remove(client);
+		clientsMap.remove(client.getId());
+		statisticsMap.remove(client.getId());
 	}
 
 	public static void main(String args[]) throws Exception {
@@ -67,7 +70,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 		Statistics stats = new Statistics(clientName, 1, maxLive, maxLive, maxEndurance, maxEndurance, protection,
 				power, stamina, speed);
 		// update statistics map
-		clientStatisticsMap.put(getClientWithId(clientId), stats);
+		statisticsMap.put(clientId, stats);
 		return stats;
 	}
 
@@ -83,33 +86,30 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 		if (lastMatch == null || lastMatch.isStarted()) {
 			lastMatch = new Match();
 		} 
-		lastMatch.registerClient(client);
+		// if client cannot be properly registered on the match, there is something broken with it and we need to create a new match
+		try {
+			lastMatch.registerClient(client);
+		} catch (Exception e) {
+			// register the client on an empty match
+			lastMatch = new Match();
+			lastMatch.registerClient(client);
+		}
 		return lastMatch;
 	}
 
-	// returns client with given id from clientsList
-	private ClientInterface getClientWithId(String clientId) throws RemoteException {
-		for (ClientInterface client : clientsList) {
-			if (client.getId().equals(clientId)) {
-				return client;
-			}
-		}
-		return null;
+	@Override
+	public Statistics getClientStatistics(String clientId) throws RemoteException {
+		return statisticsMap.get(clientId);
 	}
 
 	@Override
-	public Statistics getClientStatistics(ClientInterface client) throws RemoteException {
-		return clientStatisticsMap.get(client);
+	public void setClientStatistics(String clientId, Statistics statistics) throws RemoteException {
+		statisticsMap.put(clientId, statistics);
 	}
 
 	@Override
-	public void setClientStatistics(ClientInterface client, Statistics statistics) throws RemoteException {
-		clientStatisticsMap.put(client, statistics);
-	}
-
-	@Override
-	public Statistics resetClientsActiveLiveAndEndurance(ClientInterface client) throws RemoteException {
-		Statistics stats = clientStatisticsMap.get(client);
+	public Statistics resetClientsActiveLiveAndEndurance(String clientId) throws RemoteException {
+		Statistics stats = statisticsMap.get(clientId);
 		stats.setActiveEndurance(stats.getMaxEndurance());
 		stats.setActiveLive(stats.getMaxLive());
 		return stats;
