@@ -80,7 +80,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 
 	@Override
 	public MatchInterface startMatchAgainstPlayer(ClientInterface client) throws RemoteException {
-		if (lastMatch == null || lastMatch.isReady()) {
+		if (lastMatch == null || lastMatch.isStarted()) {
 			lastMatch = new Match();
 		} 
 		lastMatch.registerClient(client);

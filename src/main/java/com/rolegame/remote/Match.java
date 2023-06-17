@@ -18,13 +18,14 @@ public class Match extends UnicastRemoteObject implements MatchInterface {
     private String activeClientId;
     private Random random = new Random();
     private double waitingTimeStart;
+    private boolean isStarted = false;
 
     public Match() throws RemoteException {
     }
 
     @Override
-    public boolean isReady() throws RemoteException {
-        return (clientA != null && clientB != null);
+    public boolean isStarted() throws RemoteException {
+        return this.isStarted;
     }
 
     @Override
@@ -44,8 +45,9 @@ public class Match extends UnicastRemoteObject implements MatchInterface {
             clientB = client;
         }
         // match ready: determine who may start
-        if (this.isReady()) {
+        if (clientA != null && clientB != null) {
             startMatch();
+            this.isStarted = true;
         }
     }
 

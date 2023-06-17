@@ -27,12 +27,11 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 	private static final String CMD_HEAVY_ATTACK = "heavy";
 
 	private static final String MSG_WIN = "You won!";
-	private static final String MSG_WIN_TIMEOUT = "You won because your opponent waited too long.";
 	private static final String MSG_LOSE = "You lost!";
-	private static final String MSG_LOSE_TIMEOUT = "You lost because you waited too long.";
 
 	private static final String ERR_UNKNOWN_CMD = "Unrecognized command, try again.";
 	private static final String ERR_SERVER_DISCONNECT = "No connection to server available.";
+	private static final String ERR_CONNECTION_MATCH = "Connection to server lost or disconnect of opponent. Match ended unexpectedly.";
 
 	private ServerInterface server;
 	private String id;
@@ -47,14 +46,14 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 		scanner = new Scanner(System.in);
 	}
 
-	public void close() throws RemoteException {
+	private void close() throws RemoteException {
 		scanner.close();
 		server.unregister(this);
 		// this line is necessary to terminate the process
 		UnicastRemoteObject.unexportObject(this, true);
 	}
 
-	public void createCharacter() throws RemoteException {
+	private void createCharacter() {
 		String name;
 		JansiHelper.print("Enter your name:");
 		while (true) {
@@ -68,9 +67,13 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 				break;
 			}
 		}
-		statistics = server.createNewStatistics(id, name);
-		JansiHelper.print("You have the following statistics:");
-		JansiHelper.print(statistics.toString());
+		try {
+			statistics = server.createNewStatistics(id, name);
+			JansiHelper.print("You have the following statistics:");
+			JansiHelper.print(statistics.toString());
+		} catch (RemoteException e) {
+			JansiHelper.printError(ERR_SERVER_DISCONNECT);
+		}
 	}
 
 	private void displayMenuInfo() {
@@ -88,7 +91,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 		JansiHelper.print("Type " + JansiHelper.alert(CMD_HEAVY_ATTACK) + " to make a heavy attack.");
 	}
 
-	public void run() throws RemoteException {
+	public void run() {
 		String input = "";
 		while (!input.equals(EXIT_CODE)) {
 			displayMenuInfo();
@@ -126,47 +129,66 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 		JansiHelper.print(statistics.toString());
 	}
 
-	private void fightPlayer() throws RemoteException {
-		MatchInterface match = server.startMatchAgainstPlayer(this);
-		fightGeneral(match);
+	// fight another player
+	private void fightPlayer() {
+		try {
+			MatchInterface match = server.startMatchAgainstPlayer(this);
+			fightGeneral(match);
+		} catch (RemoteException e) {
+			JansiHelper.printError(ERR_SERVER_DISCONNECT);
+		}
+		
 	}
 
-	public void fightServer() throws RemoteException {
-		MatchInterface match = server.startMatchAgainstServer(this);
-		fightGeneral(match);
+	private void fightServer() {
+		try {
+			MatchInterface match = server.startMatchAgainstServer(this);
+			fightGeneral(match);
+		} catch (RemoteException e) {
+			JansiHelper.printError(ERR_SERVER_DISCONNECT);
+		}
 	}
 
 	// fight a match in general, no matter whether against server or client
-	private void fightGeneral(MatchInterface match) throws RemoteException {
-		if (match == null)
-			return;
-		while (!match.isReady()) {
-		}
-		JansiHelper.print("Match now ready");
+	private void fightGeneral(MatchInterface match) {
+		try {
+			JansiHelper.print("Waiting for the match to start...");
+			if (match == null)
+				return;
+			while (!match.isStarted()) {
+			}
+			JansiHelper.print("Match now ready");
 
-		// to ensure console is not flooded with wainting messages
-		boolean waitingDisplayed = false;
-		while (true) {
-			String winningClient = match.getWinningClient();
-			// TODO display winning because of timeout?
-			if (winningClient != null && winningClient.equals(id)) {
-				JansiHelper.print(JansiHelper.alert(MSG_WIN));
-				break;
-			} else if (winningClient != null) {
-				JansiHelper.print(JansiHelper.alert(MSG_LOSE));
-				break;
+			// to ensure console is not flooded with wainting messages
+			boolean waitingDisplayed = false;
+			while (true) {
+				String winningClient = match.getWinningClient();
+				// TODO display winning because of timeout?
+				if (winningClient != null && winningClient.equals(id)) {
+					JansiHelper.print(JansiHelper.alert(MSG_WIN));
+					break;
+				} else if (winningClient != null) {
+					JansiHelper.print(JansiHelper.alert(MSG_LOSE));
+					break;
+				}
+				if (match.isActiveClient(this.id)) {
+					JansiHelper.print("It is your turn!");
+					makeMatchChoice(match);
+					waitingDisplayed = false;
+				} else if (!waitingDisplayed) {
+					JansiHelper.print("Waiting for the other player to attack...");
+					waitingDisplayed = true;
+				}
 			}
-			if (match.isActiveClient(this.id)) {
-				JansiHelper.print("It is your turn!");
-				makeMatchChoice(match);
-				waitingDisplayed = false;
-			} else if (!waitingDisplayed) {
-				JansiHelper.print("Waiting for the other player to attack...");
-				waitingDisplayed = true;
-			}
+		} catch (RemoteException e) {
+			JansiHelper.printError(ERR_CONNECTION_MATCH);
 		}
-		// tell the server to reset the active live and endurance
-		this.statistics = server.resetClientsActiveLiveAndEndurance(this);
+		// even if match ended unexpectedly, need to reset active live and endurance
+		try {
+			this.statistics = server.resetClientsActiveLiveAndEndurance(this);
+		} catch (RemoteException e) {
+			JansiHelper.printError(ERR_SERVER_DISCONNECT);
+		}
 	}
 
 	private void makeMatchChoice(MatchInterface match) throws RemoteException {

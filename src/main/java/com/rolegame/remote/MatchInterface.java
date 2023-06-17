@@ -10,7 +10,7 @@ import com.rolegame.data.TooSlowException;
 
 public interface MatchInterface extends Remote {
 
-    public boolean isReady() throws RemoteException;
+    public boolean isStarted() throws RemoteException;
 
     public boolean isActiveClient(String clientId) throws RemoteException;
 

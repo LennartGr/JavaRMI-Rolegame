@@ -1,7 +1,7 @@
 package com.rolegame.data;
 
 /**
- * Custom exception class for Battleship game exceptions.
+ * Custom exception class for role game exceptions.
  */
 public class RolegameException extends Exception {
 

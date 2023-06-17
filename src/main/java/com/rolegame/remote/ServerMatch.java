@@ -19,7 +19,7 @@ public class ServerMatch extends UnicastRemoteObject implements MatchInterface {
     }
 
     @Override
-    public boolean isReady() throws RemoteException {
+    public boolean isStarted() throws RemoteException {
         return true;
     }
 
