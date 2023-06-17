@@ -66,7 +66,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 				break;
 			}
 		}
-		statistics = server.getStatistics(id, name);
+		statistics = server.createNewStatistics(id, name);
 		JansiHelper.print("You have the following statistics:");
 		JansiHelper.print(statistics.toString());
 	}

@@ -92,19 +92,11 @@ public class Match extends UnicastRemoteObject implements MatchInterface {
                     * attackerStats.getActiveEndurance() / attackerStats.getMaxEndurance());
             attackerStats.setActiveEndurance(Math.min(attackerStats.getMaxEndurance(), attackerNewEndurance));
         }
-        // doesn't work
-        // attacker.setStatistics(attackerStats);
-        // defender.setStatistics(defenderStats);
+        attacker.setStatistics(attackerStats);
+        defender.setStatistics(defenderStats);
 
-        // ugly
-        if (clientId.equals(clientA.getId())) {
-            clientA.setStatistics(attackerStats);
-            clientB.setStatistics(defenderStats);
-        } else {
-            clientB.setStatistics(attackerStats);
-            clientA.setStatistics(defenderStats);
-        }
-
+        final String attackType = heavy ? "heavy" : "light";
+        defender.receiveInformation("Your opponent made a " + attackType + " attack.");
         switchActiveClient();
         // TODO start timer for the active client
     }
