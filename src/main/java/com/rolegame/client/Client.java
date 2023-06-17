@@ -201,6 +201,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 		} catch (RemoteException e) {
 			JansiHelper.printError(ERR_SERVER_DISCONNECT);
 		}
+		timerThreadActive = false;
 	}
 
 	private void makeMatchChoice(MatchInterface match) throws RemoteException {
