@@ -31,6 +31,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 	private static final String MSG_LOSE_TIMEOUT = "You lost because you waited too long.";
 
 	private static final String ERR_UNKNOWN_CMD = "Unrecognized command, try again.";
+	private static final String ERR_SERVER_DISCONNECT = "No connection to server available.";
 
 	private ServerInterface server;
 	private String id;
@@ -93,7 +94,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 			input = scanner.nextLine();
 			switch (input) {
 				case CMD_STATS:
-					JansiHelper.print(statistics.toString());
+					showStatistics();
 					break;
 				case CMD_NEW:
 					createCharacter();
@@ -111,6 +112,17 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 				}
 			}
 		}
+	}
+
+	private void showStatistics() {
+		try {
+			// attempt fetch from server
+			this.getStatistics();
+		} catch (RemoteException e) {
+			JansiHelper.printError(ERR_SERVER_DISCONNECT);
+			JansiHelper.print("Your last knows statistics are:");
+		}
+		JansiHelper.print(statistics.toString());
 	}
 
 	private void fightPlayer() throws RemoteException {
@@ -152,7 +164,8 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 				waitingDisplayed = true;
 			}
 		}
-		resetActiveLiveAndEndurance();
+		// tell the server to reset the active live and endurance
+		this.statistics = server.resetClientsActiveLiveAndEndurance(this);
 	}
 
 	private void makeMatchChoice(MatchInterface match) throws RemoteException {
@@ -187,11 +200,6 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 		}
 	}
 
-	private void resetActiveLiveAndEndurance() {
-		this.statistics.setActiveEndurance(this.statistics.getMaxEndurance());
-		this.statistics.setActiveLive(this.statistics.getMaxLive());
-	}
-
 	@Override
 	public void receiveInformation(String information) throws RemoteException {
 		JansiHelper.print("[" + JansiHelper.colorize(information, "yellow") + "]");
@@ -217,12 +225,15 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 
 	@Override
 	public Statistics getStatistics() throws RemoteException {
-		return statistics;
+		Statistics newStats = server.getClientStatistics(this);
+		statistics = newStats;
+		return newStats;
 	}
 
 	@Override
 	public void setStatistics(Statistics statistics) throws RemoteException {
 		this.statistics = statistics;
+		server.setClientStatistics(this, statistics);
 	}
 
 	public static void main(String args[]) throws Exception {

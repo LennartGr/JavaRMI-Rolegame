@@ -17,4 +17,7 @@ public interface ServerInterface extends Remote {
     public MatchInterface startMatchAgainstServer(ClientInterface client) throws RemoteException;
     public MatchInterface startMatchAgainstPlayer(ClientInterface client) throws RemoteException;
 
+    public Statistics getClientStatistics(ClientInterface client) throws RemoteException;
+    public void setClientStatistics(ClientInterface client, Statistics statistics) throws RemoteException;
+    public Statistics resetClientsActiveLiveAndEndurance(ClientInterface client) throws RemoteException;
 }

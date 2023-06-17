@@ -66,6 +66,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 		final int speed = 5;
 		Statistics stats = new Statistics(clientName, 1, maxLive, maxLive, maxEndurance, maxEndurance, protection,
 				power, stamina, speed);
+		// update statistics map
+		clientStatisticsMap.put(getClientWithId(clientId), stats);
 		return stats;
 	}
 
@@ -84,5 +86,35 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 		lastMatch.registerClient(client);
 		return lastMatch;
 	}
+
+	// returns client with given id from clientsList
+	private ClientInterface getClientWithId(String clientId) throws RemoteException {
+		for (ClientInterface client : clientsList) {
+			if (client.getId().equals(clientId)) {
+				return client;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Statistics getClientStatistics(ClientInterface client) throws RemoteException {
+		return clientStatisticsMap.get(client);
+	}
+
+	@Override
+	public void setClientStatistics(ClientInterface client, Statistics statistics) throws RemoteException {
+		clientStatisticsMap.put(client, statistics);
+	}
+
+	@Override
+	public Statistics resetClientsActiveLiveAndEndurance(ClientInterface client) throws RemoteException {
+		Statistics stats = clientStatisticsMap.get(client);
+		stats.setActiveEndurance(stats.getMaxEndurance());
+		stats.setActiveLive(stats.getMaxLive());
+		return stats;
+	}
+
+	
 
 }
