@@ -127,4 +127,15 @@ public class ServerMatch extends UnicastRemoteObject implements MatchInterface {
         return serverStats;
     }
 
+    @Override
+    public boolean usesAttackTimer() throws RemoteException {
+        return false;
+    }
+
+    @Override
+    public double getAttackerTimeLeft() throws RemoteException {
+        // not relevant this no attack timer used
+        return 0;
+    }
+
 }

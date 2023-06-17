@@ -138,4 +138,14 @@ public class Match extends UnicastRemoteObject implements MatchInterface {
         return getOther(getClientWithId(clientId)).getStatistics();
     }
 
+    @Override
+    public boolean usesAttackTimer() throws RemoteException {
+        return true;
+    }
+
+    @Override
+    public double getAttackerTimeLeft() throws RemoteException {
+        return TIMEOUT_SEC * 1000 - (System.currentTimeMillis() - this.waitingTimeStart);
+    }
+
 }

@@ -22,4 +22,8 @@ public interface MatchInterface extends Remote {
 
     public Statistics getOpponenStatistics(String clientId) throws RemoteException;
 
+    public boolean usesAttackTimer() throws RemoteException;
+
+    public double getAttackerTimeLeft() throws RemoteException;
+
 }

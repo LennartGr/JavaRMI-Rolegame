@@ -38,6 +38,9 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 	private Scanner scanner;
 	private Statistics statistics;
 
+	// used to control timer thread
+	private boolean timerThreadActive = false;
+
 	public Client() throws MalformedURLException, RemoteException, NotBoundException {
 		super();
 		server = (ServerInterface) Naming.lookup("//localhost/rolegame");
@@ -157,7 +160,7 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 				return;
 			while (!match.isStarted()) {
 			}
-			JansiHelper.print("Match now ready");
+			JansiHelper.print(JansiHelper.alert("Match now ready"));
 
 			// to ensure console is not flooded with wainting messages
 			boolean waitingDisplayed = false;
@@ -173,7 +176,16 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 				}
 				if (match.isActiveClient(this.id)) {
 					JansiHelper.print("It is your turn!");
+					// start the timer thread if necessary
+					timerThreadActive = true;
+					if (match.usesAttackTimer()) {
+						TimerThread timer = new TimerThread(match);
+						// note to self: call start NOT run
+						timer.start();
+					}
 					makeMatchChoice(match);
+					// returning from match choice: timer can be stopped
+					timerThreadActive = false;
 					waitingDisplayed = false;
 				} else if (!waitingDisplayed) {
 					JansiHelper.print("Waiting for the other player to attack...");
@@ -273,6 +285,35 @@ public class Client extends UnicastRemoteObject implements ClientInterface {
 			chatClient.close();
 		} catch (RemoteException e) {
 			JansiHelper.printError(ERR_SERVER_DISCONNECT);
+		}
+	}
+
+	class TimerThread extends Thread {
+
+		// all in millis
+		private static final int[] WARNINGS_TIME_LEFT = { 10, 5, 3 };
+
+		private MatchInterface match;
+
+		public TimerThread(MatchInterface match) {
+			super();
+			this.match = match;
+		}
+
+		public void run() {
+			int warningIndex = 0;
+			while (timerThreadActive) {
+				boolean warningMissing = warningIndex < WARNINGS_TIME_LEFT.length;
+				try {
+					if (warningMissing && (WARNINGS_TIME_LEFT[warningIndex] * 1000) > match.getAttackerTimeLeft()) {
+						// new warning triggered
+						String warning = "Only " + WARNINGS_TIME_LEFT[warningIndex++] + " seconds left to attack...";
+						JansiHelper.print(JansiHelper.colorize(warning, "yellow"));
+					}
+				} catch (RemoteException e) {
+					return;
+				}
+			}
 		}
 	}
 
